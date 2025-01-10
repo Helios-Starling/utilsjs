@@ -1,4 +1,5 @@
 import { MessageType } from "../constants/protocol";
+import { createBaseMessage } from "./base";
 
 /**
    * Creates a new request message
@@ -11,9 +12,7 @@ import { MessageType } from "../constants/protocol";
    */
   export function createRequest(method, payload = undefined, options = {}) {
     return {
-      protocol: 'helios-starling',
-      version: options.version || '1.0.0',
-      timestamp: Date.now(),
+      ...createBaseMessage(options),
       type: MessageType.REQUEST,
       requestId: options.requestId || crypto.randomUUID(),
       method,

@@ -1,4 +1,5 @@
 import { MessageType } from "../constants/protocol";
+import { createBaseMessage } from "./base";
 
 /**
    * Creates a notification message
@@ -10,9 +11,7 @@ import { MessageType } from "../constants/protocol";
    */
   export function createNotification(data, topic = undefined, options = {}) {
     return {
-      protocol: 'helios-starling',
-      version: options.version || '1.0.0',
-      timestamp: Date.now(),
+      ...createBaseMessage(options),
       type: MessageType.NOTIFICATION,
       notification: {
         ...(topic !== undefined && { topic }),

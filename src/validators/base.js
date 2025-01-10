@@ -14,6 +14,7 @@
 
   import { MessageType, Patterns, SizeLimits, ReservedNamespaces } from "../constants/protocol.js";
   import { estimateMessageSize, getCurrentTimestamp } from "../utils/message.js";
+  import { DefaultValidationOptions } from "../constants/protocol.js";
   
   // Utility functions
   /**
