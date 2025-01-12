@@ -1,9 +1,15 @@
 {
   "name": "@helios-starling/utils",
   "version": "0.1.1",
-  "description": "Shared utilities for the Helios-Starling protocol",
-  "type": "module",
+  "author": "Killian Di Vincenzo",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/helios-starling/utilsjs.git"
+  },
   "main": "src/index.js",
+  "devDependencies": {
+    "bun": "latest"
+  },
   "exports": {
     ".": "./src/index.js",
     "./validators": "./src/validators/index.js",
@@ -11,11 +17,16 @@
     "./constants": "./src/constants/index.js",
     "./utils": "./src/utils/index.js"
   },
-  "scripts": {
-    "test": "bun test",
-    "lint": "eslint src/**/*.js",
-    "format": "prettier --write src/**/*.js"
+  "bugs": {
+    "url": "https://github.com/helios-starling/utilsjs/issues"
   },
+  "description": "Shared utilities for the Helios-Starling protocol",
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "homepage": "https://github.com/helios-starling/utilsjs#readme",
   "keywords": [
     "helios",
     "starling",
@@ -24,25 +35,14 @@
     "validation",
     "utilities"
   ],
-  "author": "Killian Di Vincenzo",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/helios-starling/utilsjs.git"
-  },
-  "bugs": {
-    "url": "https://github.com/helios-starling/utilsjs/issues"
-  },
-  "homepage": "https://github.com/helios-starling/utilsjs#readme",
-  "devDependencies": {
-    "bun": "latest"
-  },
   "publishConfig": {
     "access": "public"
   },
-  "files": [
-    "src",
-    "README.md",
-    "LICENSE"
-  ]
+  "scripts": {
+    "test": "bun test",
+    "lint": "eslint src/**/*.js",
+    "format": "prettier --write src/**/*.js"
+  },
+  "type": "module"
 }

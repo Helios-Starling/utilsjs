@@ -157,6 +157,67 @@ declare namespace HeliosUtils {
     export function validateNotification(message: unknown, options?: NotificationValidationOptions): ValidationResult;
     export function validateMessage(message: unknown, options?: ValidationOptions): ExtendedValidationResult;
 
+    // ============= Resolution Types =============
+    export interface ResolutionOptions {
+        strict?: boolean;
+        allowCustomTypes?: boolean;
+        maxMessageSize?: number;
+        level?: ValidationLevel;
+    }
+
+    export interface ResolutionResult {
+        isStandard: boolean;
+        isValid: boolean;
+        violations: string[];
+        type: MessageType | null;
+    }
+
+    export interface ProtocolResolution {
+        // Handlers
+        onViolation(handler: (violations: string[]) => void): this;
+        onAlien(handler: (message: unknown) => void): this;
+        onRequest(handler: (message: RequestMessage) => void): this;
+        onResponse(handler: (message: ResponseMessage) => void): this;
+        onNotification(handler: (message: NotificationMessage) => void): this;
+        onErrorMessage(handler: (message: ErrorMessage) => void): this;
+
+        // Configuration
+        lenient(): this;
+
+        // State accessors
+        getResult(): ResolutionResult;
+        getType(): MessageType | null;
+        getViolations(): string[];
+        isStandard(): boolean;
+        isValid(): boolean;
+    }
+
+    // Update MessageType enum
+    export enum MessageType {
+        REQUEST = 'request',
+        RESPONSE = 'response',
+        NOTIFICATION = 'notification',
+        ERROR = 'error'
+    }
+
+    export enum ValidationLevel {
+        PROTOCOL = 'protocol',
+        MESSAGE = 'message'
+    }
+
+    // Add error message type
+    export interface ErrorMessage extends BaseMessage {
+        type: 'error';
+        error: {
+            code: string;
+            message: string;
+            details?: any;
+        };
+    }
+
+    // Add resolution function
+    export function resolve(message: unknown, options?: ResolutionOptions): ProtocolResolution;
+
     // ============= Formatters =============
     export interface MessageOptions {
         version?: string;

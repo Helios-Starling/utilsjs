@@ -7,6 +7,7 @@ export const MessageType = {
     REQUEST: 'request',
     RESPONSE: 'response',
     NOTIFICATION: 'notification',
+    ERROR: 'error',
   
     /** @returns {string[]} Array of all valid message types */
     values() {
@@ -22,7 +23,28 @@ export const MessageType = {
       return this.values().includes(value);
     }
   };
+
+
+  /**
+ * Message validation levels
+ * @readonly
+ * @enum {string}
+ */
+export const ValidationLevel = {
+  PROTOCOL: 'protocol',  // Validation de base du protocole
+  MESSAGE: 'message'     // Validation spécifique au type de message
+};
   
+
+/**
+ * Error severity levels
+ * @readonly
+ * @enum {string}
+ */
+export const ErrorSeverity = {
+  PROTOCOL: 'protocol',  // Erreur au niveau du protocole
+  APPLICATION: 'application'  // Erreur applicative
+};
   /**
    * Protocol constants
    * @readonly
