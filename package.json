@@ -44,5 +44,9 @@
     "lint": "eslint src/**/*.js",
     "format": "prettier --write src/**/*.js"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@killiandvcz/maestro": "^1.0.0",
+    "@killiandvcz/pulse": "^1.0.2"
+  }
 }

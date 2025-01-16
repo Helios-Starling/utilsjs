@@ -50,6 +50,7 @@ export const RequestErrorCode = {
    
    // Validation errors
    VALIDATION_ERROR: 'VALIDATION_ERROR',
+   PROTOCOL_VIOLATION: 'PROTOCOL_VIOLATION',
    
    // Internal errors
    INTERNAL_ERROR: 'INTERNAL_ERROR'

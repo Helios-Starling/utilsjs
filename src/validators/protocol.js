@@ -3,7 +3,19 @@ import { Protocol, ValidationLevel, MessageType } from "../constants/protocol.js
 import { estimateMessageSize } from "../utils/message.js";
 
 /**
- * Protocol resolution options
+ * Message format enumeration
+ * @readonly
+ * @enum {string}
+ */
+export const MessageFormat = {
+  BINARY: 'binary',
+  JSON: 'json',
+  TEXT: 'text',
+  PROTOCOL: 'protocol'
+};
+
+/**
+ * Resolution options
  * @typedef {Object} ResolutionOptions
  * @property {boolean} [strict=true] Whether to enforce strict protocol validation
  * @property {boolean} [allowCustomTypes=false] Whether to allow custom message types
@@ -12,32 +24,31 @@ import { estimateMessageSize } from "../utils/message.js";
  */
 
 /**
- * Message handler function
- * @typedef {(message: any) => void} MessageHandler
- */
-
-/**
- * Violation handler function
+ * Handler types
+ * @typedef {(message: unknown) => void} MessageHandler
  * @typedef {(violations: string[]) => void} ViolationHandler
+ * @typedef {(text: string) => void} TextHandler
+ * @typedef {(data: object) => void} JsonHandler
+ * @typedef {(data: ArrayBuffer|Uint8Array) => void} BinaryHandler
  */
 
 /**
  * Resolution result object
  * @typedef {Object} ResolutionResult
- * @property {boolean} isStandard Whether the message is a standard protocol message
+ * @property {MessageFormat} format Detected message format
  * @property {boolean} isValid Whether the message is valid
- * @property {string[]} violations Array of protocol violations
- * @property {string} type Resolved message type if valid
+ * @property {string[]} violations Array of protocol violations if any
+ * @property {string} [type] Resolved protocol message type if applicable
  */
 
 /**
  * Protocol Resolution class
- * Immediately resolves and validates any incoming message according to the Helios-Starling protocol.
+ * Immediately resolves and validates any incoming message, providing typed handlers
+ * for different message formats and protocol types.
  */
 class ProtocolResolution {
   /**
    * Creates a new protocol resolution instance
-   * Immediately resolves and validates the message
    * @param {unknown} message Message to resolve
    * @param {ResolutionOptions} [options] Resolution options
    */
@@ -47,10 +58,10 @@ class ProtocolResolution {
     
     /** @private */
     this._resolvedType = null;
-    
+
     /** @private */
-    this._message = message;
-    
+    this._parsedData = null;
+
     /** @private */
     this._options = {
       strict: true,
@@ -58,45 +69,88 @@ class ProtocolResolution {
       level: ValidationLevel.PROTOCOL,
       ...options
     };
-
+    
     /** @private */
-    this._result = this._resolveMessage();
+    this._message = message;
+    
+    /** @private */
+    this._format = this._detectFormat(message);
+
+    // Parse and validate immediately
+    try {
+      this._resolveMessage();
+    } catch (error) {
+      console.log("Error resolving message:", error);
+    } 
   }
 
   /**
-   * Resolves the message and returns the resolution result
+   * Detects the format of the incoming message
    * @private
-   * @returns {ResolutionResult}
+   * @param {unknown} message Message to analyze
+   * @returns {MessageFormat} Detected format
    */
-  _resolveMessage() {
-    // Basic type validation
-    if (!this._message || typeof this._message !== 'object' || Array.isArray(this._message)) {
-      this._addViolation('Message must be an object');
-      return this._createResult(false);
+  _detectFormat = (message) => {
+    console.log("Detecting message format", message);
+    if (message instanceof ArrayBuffer || message instanceof Uint8Array) {
+      return MessageFormat.BINARY;
     }
 
-    // Protocol identification
-    if (!('protocol' in this._message) || this._message.protocol !== Protocol.NAME) {
-      return this._createResult(false);
+    if (typeof message === 'string') {
+      try {
+        this._parsedData = JSON.parse(message);
+        return this._isProtocolMessage(this._parsedData) 
+          ? MessageFormat.PROTOCOL 
+          : MessageFormat.JSON;
+      } catch { 
+        return MessageFormat.TEXT;
+      }
     }
+
+    if (message && typeof message === 'object') {
+      console.log("Message is object:", message);
+      this._parsedData = message;
+      return this._isProtocolMessage(message) 
+        ? MessageFormat.PROTOCOL 
+        : MessageFormat.JSON;
+    }
+
+    return MessageFormat.TEXT;
+  }
+
+  /**
+   * Checks if a message follows the protocol format
+   * @private
+   * @param {object} message Message to check
+   * @returns {boolean} Whether it's a protocol message
+   */
+  _isProtocolMessage = (message) => {
+    return message?.protocol === Protocol.NAME;
+  }
+
+  /**
+   * Resolves and validates the message
+   * @private
+   */
+  _resolveMessage = () => {
+    if (this._format !== MessageFormat.PROTOCOL) {
+      return;
+    }
+
+  
 
     // Base protocol validation
     this._validateBase();
     
-    // Stop if base validation failed
-    if (this._violations.length > 0) {
-      return this._createResult(true);
-    }
-
-    // Type-specific validation
-    this._validateType();
-    
-    // Store resolved type if valid
+    // Type-specific validation if base passed
     if (this._violations.length === 0) {
-      this._resolvedType = this._message.type;
+      this._validateType();
+      
+      // Store resolved type if valid
+      if (this._violations.length === 0) {
+        this._resolvedType = this._parsedData.type;
+      }
     }
-
-    return this._createResult(true);
   }
 
   /**
@@ -104,34 +158,36 @@ class ProtocolResolution {
    * @private
    */
   _validateBase() {
-    // Version
-    if (!('version' in this._message)) {
+    // Version check
+
+  
+    if (!('version' in this._parsedData)) {
       this._addViolation('Missing required field: version');
-    } else if (typeof this._message.version !== 'string') {
+    } else if (typeof this._parsedData.version !== 'string') {
       this._addViolation('Version must be a string');
-    } else if (!isValidVersion(this._message.version)) {
+    } else if (!isValidVersion(this._parsedData.version)) {
       this._addViolation('Version must be in semantic version format (x.y.z)');
     }
 
-    // Timestamp
-    if (!('timestamp' in this._message)) {
+    // Timestamp check
+    if (!('timestamp' in this._parsedData)) {
       this._addViolation('Missing required field: timestamp');
-    } else if (!isValidTimestamp(this._message.timestamp)) {
+    } else if (!isValidTimestamp(this._parsedData.timestamp)) {
       this._addViolation('Invalid timestamp format');
     }
 
-    // Type
-    if (!('type' in this._message)) {
+    // Type check
+    if (!('type' in this._parsedData)) {
       this._addViolation('Missing required field: type');
-    } else if (!MessageType.isValid(this._message.type)) {
+    } else if (!MessageType.isValid(this._parsedData.type)) {
       this._addViolation(`Invalid type: must be one of ${MessageType.values().join(', ')}`);
     }
 
     // Size check if applicable
     if (this._options.maxMessageSize) {
-      const size = estimateMessageSize(this._message);
+      const size = estimateMessageSize(this._parsedData);
       if (size > this._options.maxMessageSize) {
-        this._addViolation(`Message size (${size} bytes) exceeds maximum allowed size (${this._options.maxMessageSize} bytes)`);
+        this._addViolation(`Message size (${size} bytes) exceeds maximum allowed size`);
       }
     }
   }
@@ -141,47 +197,32 @@ class ProtocolResolution {
    * @private
    */
   _validateType() {
-    if (!this._message.type) return;
+    if (!this._parsedData?.type) return;
 
     let typeValidation;
-    switch (this._message.type) {
-      case 'request':
-        typeValidation = validateRequest(this._message);
+    switch (this._parsedData.type) {
+      case MessageType.REQUEST:
+        typeValidation = validateRequest(this._parsedData);
         break;
-      case 'response':
-        typeValidation = validateResponse(this._message);
+      case MessageType.RESPONSE:
+        typeValidation = validateResponse(this._parsedData);
         break;
-      case 'notification':
-        typeValidation = validateNotification(this._message);
+      case MessageType.NOTIFICATION:
+        typeValidation = validateNotification(this._parsedData);
         break;
-      case 'error':
-        typeValidation = validateErrorMessage(this._message);
+      case MessageType.ERROR:
+        typeValidation = validateErrorMessage(this._parsedData);
         break;
       default:
         if (this._options.strict) {
-          this._addViolation(`Unsupported message type: ${this._message.type}`);
+          this._addViolation(`Unsupported message type: ${this._parsedData.type}`);
         }
         return;
     }
 
     if (!typeValidation.valid) {
-      typeValidation.errors.forEach(violation => this._addViolation(violation));
+      typeValidation.errors.forEach(error => this._addViolation(error));
     }
-  }
-
-  /**
-   * Creates a resolution result object
-   * @private
-   * @param {boolean} isStandard Whether the message follows the protocol format
-   * @returns {ResolutionResult}
-   */
-  _createResult(isStandard) {
-    return {
-      isStandard,
-      isValid: isStandard && this._violations.length === 0,
-      violations: this._violations,
-      type: this._resolvedType
-    };
   }
 
   /**
@@ -191,6 +232,120 @@ class ProtocolResolution {
    */
   _addViolation(violation) {
     this._violations.push(violation);
+  }
+
+  /**
+   * Gets resolution result
+   * @returns {ResolutionResult} Complete resolution result
+   */
+  getResult() {
+    return {
+      format: this._format,
+      isValid: this.isValid(),
+      violations: [...this._violations],
+      ...(this._resolvedType && { type: this._resolvedType })
+    };
+  }
+
+  /**
+   * Gets detected message format
+   * @returns {MessageFormat} Message format
+   */
+  getFormat() {
+    return this._format;
+  }
+
+  /**
+   * Gets resolved protocol message type if applicable
+   * @returns {string|null} Message type or null
+   */
+  getType() {
+    return this._resolvedType;
+  }
+
+  /**
+   * Gets protocol violations if any
+   * @returns {string[]} List of violations
+   */
+  getViolations() {
+    return [...this._violations];
+  }
+
+  /**
+   * Gets binary data if message is binary
+   * @returns {ArrayBuffer|Uint8Array|null} Binary data or null
+   */
+  getBinary() {
+    return this._format === MessageFormat.BINARY ? this._message : null;
+  }
+
+  /**
+   * Gets JSON data if message is JSON
+   * @returns {object|null} Parsed JSON object or null
+   */
+  getJson() {
+    return this._format === MessageFormat.JSON ? this._parsedData : null;
+  }
+
+  /**
+   * Gets text content if message is text
+   * @returns {string|null} Text content or null
+   */
+  getText() {
+    return this._format === MessageFormat.TEXT ? String(this._message) : null;
+  }
+
+  /**
+   * Checks message format
+   */
+  isBinary() { return this._format === MessageFormat.BINARY; }
+  isJson() { return this._format === MessageFormat.JSON; }
+  isText() { return this._format === MessageFormat.TEXT; }
+  isProtocol() { return this._format === MessageFormat.PROTOCOL; }
+
+  /**
+   * Checks if protocol message is valid
+   * @returns {boolean} Whether message is valid
+   */
+  isValid() {
+    return this._format === MessageFormat.PROTOCOL && 
+           this._violations.length === 0;
+  }
+
+  /**
+   * Subscribes to text messages
+   * @param {TextHandler} handler Text handler
+   * @returns {this} For chaining
+   */
+  onText(handler) {
+    if (this._format === MessageFormat.TEXT) {
+      handler(String(this._message));
+    }
+    return this;
+  }
+
+  /**
+   * Subscribes to JSON messages (non-protocol)
+   * @param {JsonHandler} handler JSON handler
+   * @returns {this} For chaining
+   */
+  onJson(handler) {
+    if (this._format === MessageFormat.JSON) {
+      handler(this._parsedData);
+    }
+    return this;
+  }
+
+  /**
+   * Subscribes to binary messages
+   * @param {BinaryHandler} handler Binary handler
+   * @returns {this} For chaining
+   */
+  onBinary(handler) {
+    if (this._format === MessageFormat.BINARY) {
+      handler(this._message);
+    }
+    return this;
   }
 
   /**
@@ -206,25 +361,13 @@ class ProtocolResolution {
   }
 
   /**
-   * Subscribes to non-protocol messages
-   * @param {MessageHandler} handler Non-protocol message handler
-   * @returns {this} For chaining
-   */
-  onAlien(handler) {
-    if (!this._result.isStandard) {
-      handler(this._message);
-    }
-    return this;
-  }
-
-  /**
    * Subscribes to request messages
    * @param {MessageHandler} handler Request handler
    * @returns {this} For chaining
    */
   onRequest(handler) {
-    if (this._result.isValid && this._resolvedType === 'request') {
-      handler(this._message);
+    if (this.isValid() && this._resolvedType === MessageType.REQUEST) {
+      handler(this._parsedData);
     }
     return this;
   }
@@ -235,8 +378,8 @@ class ProtocolResolution {
    * @returns {this} For chaining
    */
   onResponse(handler) {
-    if (this._result.isValid && this._resolvedType === 'response') {
-      handler(this._message);
+    if (this.isValid() && this._resolvedType === MessageType.RESPONSE) {
+      handler(this._parsedData);
     }
     return this;
   }
@@ -247,8 +390,8 @@ class ProtocolResolution {
    * @returns {this} For chaining
    */
   onNotification(handler) {
-    if (this._result.isValid && this._resolvedType === 'notification') {
-      handler(this._message);
+    if (this.isValid() && this._resolvedType === MessageType.NOTIFICATION) {
+      handler(this._parsedData);
     }
     return this;
   }
@@ -259,14 +402,14 @@ class ProtocolResolution {
    * @returns {this} For chaining
    */
   onErrorMessage(handler) {
-    if (this._result.isValid && this._resolvedType === 'error') {
-      handler(this._message);
+    if (this.isValid() && this._resolvedType === MessageType.ERROR) {
+      handler(this._parsedData);
     }
     return this;
   }
 
   /**
-   * Enables non-strict mode for custom messages
+   * Enables non-strict mode
    * @returns {this} For chaining
    */
   lenient() {
@@ -274,81 +417,47 @@ class ProtocolResolution {
     this._options.allowCustomTypes = true;
     return this;
   }
-
-  /**
-   * Gets the resolution result
-   * @returns {ResolutionResult} Current resolution state
-   */
-  getResult() {
-    return { ...this._result };
-  }
-
-  /**
-   * Gets the resolved message type
-   * @returns {string|null} Resolved message type or null if invalid
-   */
-  getType() {
-    return this._resolvedType;
-  }
-
-  /**
-   * Gets protocol violations
-   * @returns {string[]} List of violations
-   */
-  getViolations() {
-    return [...this._violations];
-  }
-
-  /**
-   * Checks if message is a standard protocol message
-   * @returns {boolean}
-   */
-  isStandard() {
-    return this._result.isStandard;
-  }
-
-  /**
-   * Checks if message is valid according to protocol
-   * @returns {boolean}
-   */
-  isValid() {
-    return this._result.isValid;
-  }
 }
 
 /**
  * Core message resolution for the Helios-Starling protocol.
  * Immediately validates and resolves any incoming message, providing
- * a fluent API for handling different message types and violations.
+ * typed handlers for different message formats.
  * 
  * @param {unknown} message Message to resolve
  * @param {ResolutionOptions} [options] Resolution options
  * @returns {ProtocolResolution} Resolution handler
  * 
  * @example
+ * // Basic protocol handling
  * resolve(message)
- *   .onAlien(msg => {
- *     console.warn('Non-protocol message:', msg);
- *   })
  *   .onViolation(violations => {
  *     console.error('Protocol violated:', violations);
  *   })
  *   .onRequest(handleRequest)
- *   .onResponse(handleResponse)
- *   .onNotification(handleNotification)
- *   .onErrorMessage(handleError);
+ *   .onResponse(handleResponse);
  *   
- * // Handlers are called immediately if applicable
- * // Chaining is optional, you can also split it:
+ * // Non-protocol message handling
+ * resolve(message)
+ *   .onText(text => {
+ *     console.log('Received text:', text);
+ *   })
+ *   .onJson(data => {
+ *     console.log('Received JSON:', data);
+ *   })
+ *   .onBinary(buffer => {
+ *     console.log('Received binary data:', buffer);
+ *   });
+ *   
+ * // Format checking
  * const resolution = resolve(message);
  * 
- * if (resolution.isValid()) {
- *   switch(resolution.getType()) {
- *     case 'request':
- *       resolution.onRequest(handleRequest);
- *       break;
- *     // ...
- *   }
+ * if (resolution.isBinary()) {
+ *   const buffer = resolution.getBinary();
+ *   // Process binary data...
+ * } else if (resolution.isJson()) {
+ *   const data = resolution.getJson();
+ *   // Process JSON data...
  * }
  */
 export function resolve(message, options = {}) {
