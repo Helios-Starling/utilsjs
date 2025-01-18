@@ -46,6 +46,7 @@
   },
   "type": "module",
   "dependencies": {
+    "@killiandvcz/buffer": "^1.0.1",
     "@killiandvcz/maestro": "^1.0.0",
     "@killiandvcz/pulse": "^1.0.2"
   }

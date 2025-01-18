@@ -12,7 +12,7 @@
  * @property {MessageType} type - Message type
  */
 
-  import { Patterns, SizeLimits, ReservedNamespaces } from "../constants/protocol.js";
+  import { Patterns, SizeLimits, ReservedNamespaces, MessageType } from "../constants/protocol.js";
   import { estimateMessageSize } from "../utils/message.js";
   import { DefaultValidationOptions } from "../constants/protocol.js";
   
@@ -117,7 +117,7 @@ export function validateBaseMessage(message) {
     }
   
     // Type check
-    const validTypes = ['request', 'response', 'notification'];
+    const validTypes = MessageType.values().join(', ')
     if (!('type' in message)) {
       errors.push('Missing required field: type');
     } else if (!validTypes.includes(message.type)) {

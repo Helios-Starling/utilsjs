@@ -8,6 +8,8 @@ export const MessageType = {
     RESPONSE: 'response',
     NOTIFICATION: 'notification',
     ERROR: 'error',
+    ACK: 'ack',
+    PING: 'ping',
   
     /** @returns {string[]} Array of all valid message types */
     values() {

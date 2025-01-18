@@ -1,5 +1,7 @@
 import { Method } from "../core/method";
-import { validateMethodName, ReservedNamespaces, parseMethod } from "../validators";
+import { validateMethodName } from "../validators";
+import { ReservedNamespaces } from "../constants";
+import { parseMethod } from "../utils";
 
 /**
 * @callback MethodHandler
@@ -20,14 +22,16 @@ export class MethodsManager {
         * @private
         */
         this._methods = new Map();
-        
-        // Initialize built-in methods
-        this._initializeBuiltInMethods(builtInMethods);
-        
+
         /**
         * Events manager
         */
         this._events = events;
+        
+        // Initialize built-in methods
+        this._initializeBuiltInMethods(builtInMethods);
+        
+        
     }
     
     
@@ -45,6 +49,7 @@ export class MethodsManager {
         
         const method = new Method(name, handler, options);
         this._methods.set(name, method);
+        
         
         this._events.emit('method:registered', {
             method,
@@ -116,6 +121,7 @@ export class MethodsManager {
         .filter(method => method.namespace === namespace);
     }
     
+
     /**
     * @private
     */
@@ -128,24 +134,21 @@ export class MethodsManager {
         if (this._methods.has(name)) {
             throw new Error(`Method ${name} already exists`);
         }
+    
         
-        const { namespace } = parseMethod(name);
+        const { namespace } = parseMethod(name);    
         if (ReservedNamespaces.includes(namespace)) {
             throw new Error(`Namespace ${namespace} is reserved`);
         }
     }
     
+    
     /**
     * @private
     */
-    _initializeBuiltInMethods(builtInMethods) {
-        console.log('Initializing built-in methods');
-        
+    _initializeBuiltInMethods(builtInMethods) {        
         for (const [name, handler] of Object.entries(builtInMethods)) {
             this.register(name, handler, { internal: true, timeout: 5000 });
         }
     }
-    
-    
-    
 }

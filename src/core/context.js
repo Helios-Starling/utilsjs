@@ -1,7 +1,6 @@
 import { 
     createSuccessResponse,
     createErrorResponse,
-    createNotification,
     CommonErrors 
   } from '@helios-starling/utils';
   
@@ -141,7 +140,7 @@ import {
         throw new Error('Request already processed');
       }
       this._markProcessed();
-  
+      
       this._starling.send(createSuccessResponse(
         this._requestId,
         data
@@ -175,7 +174,7 @@ import {
      * @param {string} [topic] - Optional notification topic
      * @throws {Error} If context is already processed
      */
-    notify(data, topic = undefined) {
+    notify(topic, data = {}) {
       if (this._processed) {
         throw new Error('Request already processed');
       }
@@ -185,10 +184,8 @@ import {
       this._streamStats.notifications++;
       this._streamStats.lastNotification = Date.now();
   
-      this._starling.send(createNotification(
-        typeof data === 'object' && data.data ? data : { data },
-        topic
-      ));
+      console.log('notify', topic, data);
+      this._starling.notify(topic, data, this._requestId);
     }
   
     /**
@@ -256,14 +253,21 @@ import {
      * @param {Object} options - Context options
      * @param {number} options.timestamp - Message timestamp
      * @param {Object} [options.metadata] - Additional metadata
+     * @param {string} [options.requestId] - Request ID
      */
-    constructor(starling, notification, { timestamp, metadata = {} }) {
+    constructor(starling, notification, { timestamp, requestId, metadata = {} }) {
       super(starling, { timestamp, metadata });
       
       /** @protected */
       this._topic = notification.topic;
       /** @protected */
       this._data = notification.data;
+
+      if (requestId) {
+        console.log("Setting request ID:", requestId);
+        
+        this._requestId = requestId;
+      }
     }
   
     /**
@@ -298,6 +302,14 @@ import {
      */
     get data() {
       return this._data;
+    }
+
+    /**
+     * Request ID (if applicable)
+     * @type {string}
+     */
+    get requestId() {
+      return this._requestId;
     }
   }
   

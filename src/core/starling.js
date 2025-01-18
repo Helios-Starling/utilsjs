@@ -3,12 +3,31 @@ import {Maestro} from '@killiandvcz/maestro';
 import { Events } from './events';
 
 /**
+* @typedef {Object} BaseStarlingOptions
+* @property {number} [messageBufferSize=1000] Message buffer size
+* @property {number} [messageMaxAge=300000] Maximum message age in ms (5 minutes)
+* @property {number} [queueMaxSize=1000] Maximum queue size
+* @property {number} [queueMaxRetries=3] Maximum number of retries
+* @property {number[]} [queueRetryDelays=[1000, 2000, 5000]] Retry delays in ms
+* @property {number} [maxMessageSize=1048576] Maximum message size in bytes
+*/
+
+
+/**
 * Base class for Starling implementations (server/client)
 * @abstract
 */
 export class BaseStarling {
+    
+    /**
+    * @param {BaseStarlingOptions} options 
+    * @param {import('./events').Events} events
+    */
     constructor(options = {}, events) {
-        /** @protected */
+        
+        /** @protected
+        * @type {BaseStarlingOptions}
+        */
         this._options = {
             messageBufferSize: 1000,
             messageMaxAge: 5 * 60 * 1000,
@@ -31,35 +50,43 @@ export class BaseStarling {
         /** @protected */
         this._disconnectedAt = null;
         
-        /** @protected */
-        this._state = 'disconnected';
+        // /** @protected */
+        // this._state = 'disconnected';
         
         /** @protected */
         this._data = new Map();
         
-        // Initialize components
-        this._initializeComponents();
-
-        // // Bind events
-        // this.events = events || new Events();
-
         /**
-         * Local starling events
-         */
+        * Local starling events
+        */
         this.events = new Events();
-
+        
         /**
-         * High-scoped events (Starling ones if client, Helios ones if server)
-         */
+        * High-scoped events (Starling ones if client, Helios ones if server)
+        */
         this._events = events || this.events;
-
+        
         // Timers group
         /**
-         * @type {import('@killiandvcz/maestro').Group}
-         */
+        * @type {import('@killiandvcz/maestro').Group}
+        */
         this.timers = Maestro.group({name: 'Starling Timers'});
-
-        
+    }
+    
+    get _state() {
+        if (this._ws?.readyState) {
+            switch (this._ws.readyState) {
+                case 0:
+                return 'connecting';
+                case 1:
+                return 'connected';
+                case 2:
+                return 'closing';
+                case 3:
+                return 'disconnected';
+            }
+        }
+        return 'disconnected';
     }
     
     /**
@@ -80,7 +107,16 @@ export class BaseStarling {
     }
     
     /**
-    * Send a message
+    * Send a message directly (bypassing the buffer)
+    * @protected
+    * @abstract
+    */
+    _send(message) {
+        throw new Error('_send must be implemented');
+    }
+    
+    /**
+    * Send a message (let the buffer handle)
     * @abstract
     */
     send(message) {
@@ -90,19 +126,27 @@ export class BaseStarling {
     /**
     * Send a notification
     * @abstract
+    * @param {string} topic
+    * @param {*} data
+    * @param {string} [requestId=null]
     */
-    notify(notification) {
+    notify(topic, data, requestId = null) {
         throw new Error('notify must be implemented');
     }
     
     /**
     * Send a request
     * @abstract
+    * @returns {import('./request').Request} Request instance
     */
     request(method, payload, options = {}) {
         throw new Error('request must be implemented');
     }
-
+    
+    
+    get id(){
+        return this._id;
+    }
     
     
     /**

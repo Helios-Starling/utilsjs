@@ -7,12 +7,14 @@ import { createBaseMessage } from "./base";
    * @param {string} [topic] - Optional routing topic
    * @param {Object} [options] - Notification options
    * @param {string} [options.version] - Protocol version
+   * @param {string} [options.requestId] - Request ID
    * @returns {NotificationMessage} Formatted notification message
    */
   export function createNotification(data, topic = undefined, options = {}) {
     return {
       ...createBaseMessage(options),
       type: MessageType.NOTIFICATION,
+      ...(options.requestId !== undefined && { requestId: options.requestId }),
       notification: {
         ...(topic !== undefined && { topic }),
         data

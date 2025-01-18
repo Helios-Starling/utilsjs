@@ -1,6 +1,7 @@
 import { validateRequest, validateResponse, validateNotification, validateErrorMessage, isValidTimestamp, isValidVersion } from "./index.js";
 import { Protocol, ValidationLevel, MessageType } from "../constants/protocol.js";
 import { estimateMessageSize } from "../utils/message.js";
+import { validateAck } from "./ack.js";
 
 /**
  * Message format enumeration
@@ -80,7 +81,7 @@ class ProtocolResolution {
     try {
       this._resolveMessage();
     } catch (error) {
-      console.log("Error resolving message:", error);
+      console.error("Error resolving message:", error);
     } 
   }
 
@@ -91,7 +92,6 @@ class ProtocolResolution {
    * @returns {MessageFormat} Detected format
    */
   _detectFormat = (message) => {
-    console.log("Detecting message format", message);
     if (message instanceof ArrayBuffer || message instanceof Uint8Array) {
       return MessageFormat.BINARY;
     }
@@ -99,6 +99,7 @@ class ProtocolResolution {
     if (typeof message === 'string') {
       try {
         this._parsedData = JSON.parse(message);
+        
         return this._isProtocolMessage(this._parsedData) 
           ? MessageFormat.PROTOCOL 
           : MessageFormat.JSON;
@@ -108,7 +109,6 @@ class ProtocolResolution {
     }
 
     if (message && typeof message === 'object') {
-      console.log("Message is object:", message);
       this._parsedData = message;
       return this._isProtocolMessage(message) 
         ? MessageFormat.PROTOCOL 
@@ -212,6 +212,9 @@ class ProtocolResolution {
         break;
       case MessageType.ERROR:
         typeValidation = validateErrorMessage(this._parsedData);
+        break;
+      case MessageType.ACK:
+        typeValidation = validateAck(this._parsedData);
         break;
       default:
         if (this._options.strict) {
@@ -391,6 +394,18 @@ class ProtocolResolution {
    */
   onNotification(handler) {
     if (this.isValid() && this._resolvedType === MessageType.NOTIFICATION) {
+      handler(this._parsedData);
+    }
+    return this;
+  }
+
+  /**
+   * Subscribes to ack messages
+   * @param {MessageHandler} handler Ack handler
+   * @returns {this} For chaining
+   */
+  onAck(handler) {
+    if (this.isValid() && this._resolvedType === MessageType.ACK) {
       handler(this._parsedData);
     }
     return this;

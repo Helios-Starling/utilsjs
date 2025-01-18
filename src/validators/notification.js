@@ -84,7 +84,7 @@ import {
   
       // Validate data
       if (!('data' in message.notification)) {
-        errors.push('notification.data is required');
+        // errors.push('notification.data is required');
       } else if (options.validateData && options.dataValidator) {
         try {
           const dataValidation = options.dataValidator(message.notification.data);

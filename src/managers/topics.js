@@ -62,7 +62,10 @@ export class TopicsManager extends Events {
                     return;
                 }
                 
-                const context = new NotificationContext(starling, data, {metadata, timestamp: event.timestamp});
+                const context = new NotificationContext(starling, {
+                    data,
+                    topic: event.name,
+                }, {metadata, timestamp: event.timestamp});
                 
                 await handler(context);
             } catch (error) {
@@ -82,6 +85,7 @@ export class TopicsManager extends Events {
             persistent: options.persistent || false,
         });
         
+
         const listener = this.on(topic, wrappedHandler, {
             priority: options.priority || 0
         });
@@ -98,17 +102,16 @@ export class TopicsManager extends Events {
     /**
     * Handle an incoming notification
     * @param {import('../core/starling').Starling} starling Starling instance
-    * @param {string} topic Topic name
-    * @param {*} data Notification data
-    * @param {Object} [metadata={}] Metadata
+    * @param {import('../core/context').NotificationContext} context Notification context
     */
-    async handleNotification(starling, topic, data, metadata = {}) {
+    async handleNotification(starling, context) {
         try {
-            await this.emit(topic, {data, starling, metadata});
+            await this.emit(context.topic, context);
         } catch (error) {
             this._events.emit('notification:error', {
                 starling: starling,
-                topic,
+                topic: context.topic,
+                notification: context.data,
                 error,
                 debug: {
                     type: 'error',
