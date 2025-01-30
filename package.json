@@ -1,0 +1,55 @@
+{
+  "name": "@helios-starling/utils",
+  "version": "0.3.0",
+  "author": "Killian Di Vincenzo",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/helios-starling/utilsjs.git"
+  },
+  "main": "src/index.js",
+  "devDependencies": {
+    "bun": "latest"
+  },
+  "exports": {
+    ".": "./src/index.js",
+    "./validators": "./src/validators/index.js",
+    "./formatters": "./src/formatters/index.js",
+    "./constants": "./src/constants/index.js",
+    "./utils": "./src/utils/index.js",
+    "./types": "./src/types/index.js",
+    "./types/*": "./src/types/*.d.js"
+  },
+  "bugs": {
+    "url": "https://github.com/helios-starling/utilsjs/issues"
+  },
+  "description": "Shared utilities for the Helios-Starling protocol",
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "homepage": "https://github.com/helios-starling/utilsjs#readme",
+  "keywords": [
+    "helios",
+    "starling",
+    "websocket",
+    "protocol",
+    "validation",
+    "utilities"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "bun test",
+    "lint": "eslint src/**/*.js",
+    "format": "prettier --write src/**/*.js"
+  },
+  "type": "module",
+  "dependencies": {
+    "@killiandvcz/buffer": "^1.0.2",
+    "@killiandvcz/maestro": "^1.0.0",
+    "@killiandvcz/pulse": "^1.0.2"
+  }
+}
