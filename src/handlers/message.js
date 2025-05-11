@@ -23,7 +23,7 @@ export async function handleMessage(starling, rawMessage) {
                 peer: request.peer || null
             });
 
-            console.log('REQQQQ:', request);
+
             
 
             
@@ -31,9 +31,6 @@ export async function handleMessage(starling, rawMessage) {
             
             
             if (context.peer) {
-                console.log('Request from:', context.peer);
-                console.log(starling._networkNode?.config.proxyConfiguration.request);
-                
                 starling._networkNode?.config.proxyConfiguration.request(context);
                 return;
             }
@@ -71,7 +68,7 @@ export async function handleMessage(starling, rawMessage) {
             });
             
             if (context.peer) {
-                console.log('Notification from proxy:', context.data);
+
                 starling._networkNode?.config.proxyConfiguration.notification(context);
                 return;
             }
@@ -86,7 +83,7 @@ export async function handleMessage(starling, rawMessage) {
             });
             
             if (context.peer) {
-                console.log('Error from proxy:', context.error);
+
                 starling._networkNode?.config.proxyConfiguration.errorMessage(context);
                 return;
             }

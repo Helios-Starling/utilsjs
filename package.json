@@ -1,6 +1,6 @@
 {
   "name": "@helios-starling/utils",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "author": "Killian Di Vincenzo",
   "repository": {
     "type": "git",
@@ -44,7 +44,8 @@
   "scripts": {
     "test": "bun test",
     "lint": "eslint src/**/*.js",
-    "format": "prettier --write src/**/*.js"
+    "format": "prettier --write src/**/*.js",
+    "generate-types": "bunx -p typescript tsc src/**/*.js --declaration --allowJs --emitDeclarationOnly --outDir types"
   },
   "type": "module",
   "dependencies": {

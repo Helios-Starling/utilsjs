@@ -1,0 +1,17 @@
+declare const _default: {};
+export default _default;
+export type ProtocolInvalidMessageError = "PROTOCOL_INVALID_MESSAGE";
+export type ProtocolVersionMismatchError = "PROTOCOL_VERSION_MISMATCH";
+export type ProtocolViolationError = "PROTOCOL_VIOLATION";
+export type ProtocolError = ProtocolInvalidMessageError | ProtocolVersionMismatchError | ProtocolViolationError;
+export type MethodNotFoundError = "METHOD_NOT_FOUND";
+export type MethodError = "METHOD_ERROR";
+export type RequestInvalidError = "REQUEST_INVALID";
+export type RequestTimeoutError = "REQUEST_TIMEOUT";
+export type RequestError = RequestInvalidError | RequestTimeoutError;
+export type ValidationError = "VALIDATION_ERROR";
+export type InternalError = "INTERNAL_ERROR";
+export type ProxyForbiddenError = "PROXY_FORBIDDEN";
+export type ProxyTimeoutError = "PROXY_TIMEOUT";
+export type ProxyError = "PROXY_ERROR";
+export type CommonError = ProtocolError | MethodError | RequestError | ValidationError | InternalError | ProxyError;

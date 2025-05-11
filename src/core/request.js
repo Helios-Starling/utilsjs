@@ -27,11 +27,9 @@ export class Request {
 
         // Créer la promise interne
         this._promise = new Promise((resolve, reject) => {
-            console.log('Request constructor');
             
             this._resolve = resolve;
             this._reject = (reason) => {
-                console.log("REASON");
                 
                 reject(reason);
             };
@@ -173,7 +171,6 @@ export class Request {
         if (this._timeout) {
             this._timeout.clear();
         }
-        
         
         this.reject(new Error(error.message || 'Request failed', {cause: {
             error,

@@ -154,11 +154,11 @@ export class RequestContext extends Context {
   }
   
   /**
-  * Sends a success response
+  * Sends a success response (if you need to override the default success handler)
   * @param {*} data - Response data
   * @throws {Error} If context is already processed
   */
-  success(data) {
+  _success(data) {
     if (this._processed) {
       throw new Error('Request already processed');
     }
@@ -171,6 +171,15 @@ export class RequestContext extends Context {
         ...(this._peer && { peer: this._peer })
       }
     ));
+  }
+  
+  /**
+  * Sends a success response
+  * @param {*} data - Response data
+  * @throws {Error} If context is already processed
+  */
+  success(data) {
+    return this._success(data);
   }
   
   /**
@@ -213,11 +222,19 @@ export class RequestContext extends Context {
     this._streamStats.notifications++;
     this._streamStats.lastNotification = Date.now();
     
-    console.log('notify', topic, data);
     this._starling.notify(topic, data, this._requestId, {
       ...(this._peer && { peer: this._peer })
     });
-    
+  }
+  
+  
+  /**
+  * Sends a warning notification
+  * @param {string} message - Warning message
+  * @throws {Error} If context is already processed
+  */
+  warn(message) {
+    this.notify('warn', { message });
   }
   
   /**
@@ -256,11 +273,11 @@ export class RequestContext extends Context {
   get requestId() {
     return this._requestId;
   }
-
+  
   /**
-   * Request method
-   * @type {import('../types/protocol.d').method}
-   */
+  * Request method
+  * @type {import('../types/protocol.d').method}
+  */
   get method() {
     return this._method;
   }
@@ -298,30 +315,30 @@ export class ResponseContext extends Context {
     
     /** @protected */
     this._data = result.data || null;
-
+    
     /** @protected */
     this._success = result.success || !result.error;
-
+    
     /** @protected */
     this._error = result.error || null;
-
+    
     if (options.requestId) {
       this._requestId = options.requestId;
     }
   }
-
+  
   get data() {
     return this._data;
   }
-
+  
   get error() {
     return this._error;
   }
-
+  
   get success() {
     return this._success;
   }
-
+  
   get requestId() {
     return this._requestId;
   }
@@ -351,12 +368,11 @@ export class NotificationContext extends Context {
     this._topic = notification.topic;
     /** @protected */
     this._data = notification.data;
-
+    
     /** @protected */
     this._type = notification.type;
     
     if (options.requestId) {
-      console.log("Setting request ID:", options.requestId);
       
       this._requestId = options.requestId;
     }
@@ -403,11 +419,11 @@ export class NotificationContext extends Context {
   get requestId() {
     return this._requestId;
   }
-
+  
   /**
-   * Notification type
-   * @type {string}
-   */
+  * Notification type
+  * @type {string}
+  */
   get type() {
     return this._type;
   }
@@ -428,7 +444,7 @@ export class ErrorMessageContext extends Context {
     
     /** @protected */
     this._raw = error;
-
+    
     /** @protected */
     this._code = error.code;
     /** @protected */
@@ -444,11 +460,11 @@ export class ErrorMessageContext extends Context {
     if (this._processed) return;
     this._markProcessed();
   }
-
+  
   /**
-   * Raw error object
-   * @type {Object}
-   */
+  * Raw error object
+  * @type {Object}
+  */
   get raw() {
     return this._raw;
   }

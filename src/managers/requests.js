@@ -303,8 +303,8 @@ export class RequestsManager {
       active: this.activeCount,
       expired: this._expiredRequests.size,
       queue: this._queue.stats,
-      memory: process.memoryUsage(),
-      uptime: process.uptime()
+      // memory: process.memoryUsage(),
+      // uptime: process.uptime()
     };
   }
 }

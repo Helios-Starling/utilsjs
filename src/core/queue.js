@@ -27,7 +27,6 @@ export class RequestQueue {
     /** @private */
     this._requestsManager = requestsManager;
     
-    
     /** @private */
     this._options = {
       maxSize: 1000,

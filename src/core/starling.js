@@ -21,7 +21,6 @@ import { NetworkNode } from './node';
 * @property {import('../managers/requests').RequestManagerOptions} [requests] Requests manager options
 */
 
-
 /**
 * Base class for Starling implementations (server/client)
 */
@@ -53,7 +52,7 @@ export class BaseStarling {
 
         /** @protected @type {NetworkNode} */
         this._networkNode = options.networkNode instanceof NetworkNode ? options.networkNode : null;
-
+        
         /** @protected */
         this._ws = null;
         
@@ -115,7 +114,6 @@ export class BaseStarling {
     * @param {string|ArrayBuffer|Uint8Array} message Raw message data
     */
     handleMessage(message) {
-        console.log('HANDLING MESSAGE:', message);
         handleMessage(this, message)
     }
     
@@ -129,7 +127,7 @@ export class BaseStarling {
             const content = typeof message === 'object' && !(message instanceof ArrayBuffer)
             ? JSON.stringify(message)
             : message;
-            console.log('TRUE SENDING MESSAGE:', content);
+            
             
             
             this._ws.send(content);
@@ -143,6 +141,8 @@ export class BaseStarling {
             });
             return true;
         } catch (error) {
+            console.log('error', error);
+            
             this.events.events.emit('message:send:failed', {
                 starling: this,
                 error,
@@ -160,7 +160,6 @@ export class BaseStarling {
     * @returns {Promise<boolean>} Whether the message was sent
     */
     send(message) {
-        console.log('SENDING MESSAGE:', message);
         return this._buffer.add(message);
     }
     

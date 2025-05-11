@@ -62,7 +62,6 @@ export class NetworkNode {
                 }
             })
         }
-        console.log('NetworkNode constructor');
         
     }
     
